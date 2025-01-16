@@ -7,7 +7,7 @@ MVN Dependency:
 <dependency>
    <groupId>com.testautomationguru.pdfutil</groupId>
    <artifactId>pdf-util</artifactId>
-   <version>0.0.2</version>
+   <version>0.0.3</version>
 </dependency>
 ```
 
@@ -126,6 +126,12 @@ pdfUtil.compare(file1, file2, 1, 5);
 //if you need to store the result
 pdfUtil.highlightPdfDifference(true);
 pdfUtil.setImageDestinationPath("c:/imgpath");
+pdfUtil.compare(file1, file2);
+
+//if you need to exclude certain areas from comparison
+pdfutil.highlightPdfExcludedAreas(true);
+Rectangle[] excludedArea = new Rectangle[] {new Rectangle(1200,2650,1200,100)};
+pdfutil.setExcludedImageAreas(excludedArea);
 pdfUtil.compare(file1, file2);
 ```
 
