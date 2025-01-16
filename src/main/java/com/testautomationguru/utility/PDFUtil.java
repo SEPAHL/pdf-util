@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -54,11 +55,14 @@ public class PDFUtil {
 	private String imageDestinationPath;
 	private boolean bTrimWhiteSpace;
 	private boolean bHighlightPdfDifference;
-	private Color imgColor;
+	private Color imgColorDifferences;
 	private PDFTextStripper stripper;
 	private boolean bCompareAllPages;
 	private CompareMode compareMode;
 	private String[] excludePattern;
+	private Rectangle[] excludedAreas;
+	private boolean bHighlightPdfExcludedAreas;
+	private Color imgColorExcludedAreas;
 	private int startPage = 1;
 	private int endPage = -1;
 	
@@ -66,12 +70,14 @@ public class PDFUtil {
 	 * Constructor
 	 */
 	
-	public PDFUtil(){
+	 public PDFUtil(){
 		this.bTrimWhiteSpace = true;
 		this.bHighlightPdfDifference = false;
-		this.imgColor = Color.MAGENTA;
+		this.imgColorDifferences = Color.MAGENTA;
 		this.bCompareAllPages = false;
 		this.compareMode = CompareMode.TEXT_MODE;
+		this.bHighlightPdfExcludedAreas = false;
+		this.imgColorExcludedAreas = new Color(0x009a00); // dark green
 		logger.setLevel(Level.OFF);
 		System.setProperty("sun.java2d.cmm", "sun.java2d.cmm.kcms.KcmsServiceProvider");
 	}
@@ -80,16 +86,18 @@ public class PDFUtil {
    * This method is used to show log in the console. Level.INFO
    * It is set to Level.OFF by default.
    */
-	public void enableLog(){
+	public PDFUtil enableLog(){
 		logger.setLevel(Level.INFO);
+		return this;
 	}
 
    /**
    * This method is used to change the file comparison mode text/visual
    * @param mode CompareMode
    */
-	public void setCompareMode(CompareMode mode){
+	public PDFUtil setCompareMode(CompareMode mode){
 		this.compareMode = mode;
+		return this;
 	}
 	
    /**
@@ -104,8 +112,9 @@ public class PDFUtil {
    * This method is used to change the level
    * @param level java.util.logging.Level 
    */
-	public void setLogLevel(java.util.logging.Level level){
+	public PDFUtil setLogLevel(java.util.logging.Level level){
 		logger.setLevel(level);
+		return this;
 	}
 		
    /**
@@ -114,8 +123,9 @@ public class PDFUtil {
    * 
    * @param flag true to enable;  false otherwise
    */
-	public void trimWhiteSpace(boolean flag){
+	public PDFUtil trimWhiteSpace(boolean flag){
 		this.bTrimWhiteSpace = flag;
+		return this;
 	}
 	
    /**
@@ -134,8 +144,9 @@ public class PDFUtil {
    * 
    * @param path Absolute path to store the images
    */	
-	public void setImageDestinationPath(String path){
+	public PDFUtil setImageDestinationPath(String path){
 		this.imageDestinationPath = path;
+		return this;
 	}
 	
    /**
@@ -144,8 +155,9 @@ public class PDFUtil {
    * 
    * @param flag true - enable ; false - disable (default);
    */	
-	public void highlightPdfDifference(boolean flag){
+	public PDFUtil highlightPdfDifference(boolean flag){
 		this.bHighlightPdfDifference = flag;
+		return this;
 	}	
 
    /**
@@ -154,9 +166,10 @@ public class PDFUtil {
    * 
    * @param colorCode color code to highlight the difference
    */	
-	public void highlightPdfDifference(Color colorCode){
+	public PDFUtil highlightPdfDifference(Color colorCode){
 		this.bHighlightPdfDifference = true;
-		this.imgColor = colorCode;
+		this.imgColorDifferences = colorCode;
+		return this;
 	}	
 		
    /**
@@ -164,8 +177,9 @@ public class PDFUtil {
    * 
    * @param flag true to enable; false otherwise
    */	
-	public void compareAllPages(boolean flag){
+	public PDFUtil compareAllPages(boolean flag){
 		this.bCompareAllPages = flag;
+		return this;
 	}	
 	
    /**
@@ -173,8 +187,9 @@ public class PDFUtil {
    * 
    * @param stripper Stripper with user strategy
    */   
-    public void useStripper(PDFTextStripper stripper){
+    public PDFUtil useStripper(PDFTextStripper stripper){
         this.stripper = stripper;
+        return this;
     }   	
 				
    /**
@@ -260,9 +275,14 @@ public class PDFUtil {
 		return txt;
 	}
 	
-	
-	public void excludeText(String... regexs){
+	/**
+	*  Add text to exclude from text comparison.
+	* 
+	* @param regexs Array of regex expressions specifying the texts to exclude
+	*/
+	public PDFUtil excludeText(String... regexs){
 		this.excludePattern = regexs;
+		return this;
 	}
 	
 	
@@ -414,6 +434,39 @@ public class PDFUtil {
 		}
 		return imgNames;  	
 	}
+
+	/**
+	*  Set specific areas to exclude from image comparison.
+	* 
+	* @param areas Array of rectangles specifying the areas to exclude
+	*/
+	public PDFUtil setExcludedImageAreas(Rectangle... areas){
+		this.excludedAreas = areas;
+		return this;
+	}
+	
+   /**
+   * Highlight the excluded areas when 2 pdf files are compared in Binary mode.
+   * The result is saved as an image.
+   * 
+   * @param flag true - enable ; false - disable (default);
+   */	
+	public PDFUtil highlightPdfExcludedAreas(boolean flag){
+		this.bHighlightPdfExcludedAreas = flag;
+		return this;
+	}	
+
+   /**
+   * Color in which pdf excluded areas can be highlighted.
+   * GREEN is the default color.
+   * 
+   * @param colorCode color code to highlight the excluded areas
+   */	
+	public PDFUtil highlightPdfExcludedAreas(Color colorCode){
+		this.bHighlightPdfExcludedAreas = true;
+		this.imgColorExcludedAreas = colorCode;
+		return this;
+	}
 		
    /**
    * Compare 2 pdf documents pixel by pixel for the content and format.
@@ -485,7 +538,14 @@ public class PDFUtil {
 					logger.info("Comparing Page No : " + (iPage+1));
 					BufferedImage image1 = pdfRenderer1.renderImageWithDPI(iPage, 300, ImageType.RGB);
 					BufferedImage image2 = pdfRenderer2.renderImageWithDPI(iPage, 300, ImageType.RGB);
-					result = ImageUtil.compareAndHighlight(image1, image2, fileName, this.bHighlightPdfDifference, this.imgColor.getRGB()) && result;
+					result = ImageUtil.compareAndHighlight(image1,
+							image2,
+							fileName,
+							this.bHighlightPdfDifference,
+							this.imgColorDifferences.getRGB(),
+							this.excludedAreas,
+							this.bHighlightPdfExcludedAreas,
+							this.imgColorExcludedAreas.getRGB()) && result;
 					if(!this.bCompareAllPages && !result){
 						break;
 					}
