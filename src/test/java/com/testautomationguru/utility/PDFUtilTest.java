@@ -9,8 +9,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
 
-import com.testautomationguru.utility.PDFUtil;
-
 public class PDFUtilTest {
 
     PDFUtil pdfutil = new PDFUtil();
