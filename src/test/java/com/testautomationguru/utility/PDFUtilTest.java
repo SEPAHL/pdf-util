@@ -1,5 +1,6 @@
 package com.testautomationguru.utility;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -100,6 +101,28 @@ public class PDFUtilTest {
         String file1 = getFilePath("image-compare-diff/sample1.pdf");
         String file2 = getFilePath("image-compare-diff/sample2.pdf");
         boolean result = pdfutil.compare(file1, file2, 3);
+        Assert.assertTrue(result);
+    }
+
+    @Test(priority = 11)
+    public void comparePDFImageModeDiffExcludedArea() throws IOException {
+        pdfutil.setCompareMode(CompareMode.VISUAL_MODE);
+        pdfutil.highlightPdfDifference(true);
+        pdfutil.highlightPdfExcludedAreas(true);
+        
+        String file1 = getFilePath("image-compare-diff/sample1.pdf");
+        String file2 = getFilePath("image-compare-diff/sample2.pdf");
+
+        // comparison needs to fail since input is different
+        boolean result = pdfutil.compare(file1, file2);
+        Assert.assertTrue(false == result);
+
+        // exclude the area of the difference
+        Rectangle[] excludedArea = new Rectangle[] {new Rectangle(1200,2650,1200,100)};
+        pdfutil.setExcludedImageAreas(excludedArea);
+
+        // comparison needs to succeed since input is different but the area is excluded
+        result = pdfutil.compare(file1, file2);
         Assert.assertTrue(result);
     }
 
